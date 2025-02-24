@@ -1,6 +1,6 @@
 {{- if .Values.karpenter.enabled -}}
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
 metadata:
   name: {{ .Values.karpenter.provisioner.name }}
   annotations:
