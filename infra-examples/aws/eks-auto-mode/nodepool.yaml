@@ -1,0 +1,66 @@
+apiVersion: eks.amazonaws.com/v1
+kind: NodeClass
+metadata:
+  name: openedx-nodeclass
+spec:
+
+  # Required: Name of IAM Role for Nodes
+  role: AmazonEKSAutoNodeRole
+
+  # Required: Subnet selection for node placement
+  subnetSelectorTerms:
+    - tags:
+        kubernetes.io/role/internal-elb: "1"
+    # Alternative using direct subnet ID
+    # - id: "subnet-0123456789abcdef0"
+
+  # Required: Security group selection for nodes
+  securityGroupSelectorTerms:
+    - tags:
+        Name: eks-cluster-sg-openedx-1263188689
+    # Alternative approaches:
+    # - id: "sg-0123456789abcdef0"
+    # - name: "eks-cluster-security-group"
+
+  # Optional: Configure SNAT policy (defaults to Random)
+  snatPolicy: Random  # or Disabled
+
+  # Optional: Network policy configuration (defaults to DefaultAllow)
+  networkPolicy: DefaultAllow  # or DefaultDeny
+
+  # Optional: Network policy event logging (defaults to Disabled)
+  networkPolicyEventLogs: Disabled  # or Enabled
+
+  # Optional: Configure ephemeral storage (shown with default values)
+  ephemeralStorage:
+    size: "50Gi"    # Range: 1-59000Gi or 1-64000G or 1-58Ti or 1-64T
+    iops: 3000      # Range: 3000-16000
+    throughput: 125 # Range: 125-1000
+
+  # Optional: Additional EC2 tags
+#  tags:
+#    Environment: "production"
+#    Team: "platform"
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: openedx-nodepool
+spec:
+  template:
+    spec:
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: openedx-nodeclass
+
+      requirements:
+        - key: "node.kubernetes.io/instance-type"
+          operator: In
+          values: ["t3.large"]
+        - key: "kubernetes.io/arch"
+          operator: In
+          values: ["amd64"]
+        - key: "karpenter.sh/capacity-type"
+          operator: In
+          values: ["on-demand"]
